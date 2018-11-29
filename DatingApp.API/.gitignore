@@ -1,0 +1,4 @@
+.scode
+bin
+obj
+*.db
