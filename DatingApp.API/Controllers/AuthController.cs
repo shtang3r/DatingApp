@@ -22,7 +22,7 @@ namespace DatingApp.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;
 
-        public AuthController(IAuthRepository repository,        
+        public AuthController(IAuthRepository repository,
                               IConfiguration configuration,
                               ITokenService tokenService)
         {
@@ -31,33 +31,34 @@ namespace DatingApp.API.Controllers
             _repository = repository;
         }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] UserForRegisterDto userForRegisterDto)
-    {
-        userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
-
-        if (await _repository.UserExistsAsync(userForRegisterDto.Username))
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] UserForRegisterDto userForRegisterDto)
         {
-            return BadRequest("User with this name already exists");
+            userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
+
+            if (await _repository.UserExistsAsync(userForRegisterDto.Username))
+            {
+                return BadRequest("User with this name already exists");
+            }
+
+            var userToCreate = new User { Username = userForRegisterDto.Username };
+            var createdUser = await _repository.RegisterAsync(userToCreate, userForRegisterDto.Password);
+
+            return StatusCode(201);
         }
 
-        var userToCreate = new User { Username = userForRegisterDto.Username };
-        var createdUser = await _repository.RegisterAsync(userToCreate, userForRegisterDto.Password);
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
+        {
+            throw new Exception("lolka OWNED GGGG");
+            var userFromRepo = await _repository.LoginAsync(userForLoginDto.Username.ToLower(), userForLoginDto.Password.ToLower());
 
-        return StatusCode(201);
+            if (userFromRepo == null)
+                return Unauthorized();
+
+            var token = _tokenService.GetToken(userFromRepo);
+
+            return Ok(new { token });
+        }
     }
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
-    {
-        var userFromRepo = await _repository.LoginAsync(userForLoginDto.Username.ToLower(), userForLoginDto.Password.ToLower());
-
-        if (userFromRepo == null)
-            return Unauthorized();
-
-        var token = _tokenService.GetToken(userFromRepo);
-
-        return Ok( new {  token  });
-    }
-}
 }

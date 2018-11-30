@@ -16,6 +16,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DatingApp.API.Services;
+using Microsoft.AspNetCore.Http;
+using System.Net;
+using Microsoft.AspNetCore.Diagnostics;
+using DatingApp.API.Helpers;
 
 namespace DatingApp.API
 {
@@ -59,14 +63,14 @@ namespace DatingApp.API
             }
             else
             {
-                // app.UseHsts();
+                app.UseExceptionHandler(builder => builder.Run(CustomMiddleware.ExceptionHandler));
             }
 
             // app.UseHttpsRedirection();
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseAuthentication();
             app.UseMvc();
-        }
+        }   
 
         private string GetConnectionString()
         {
