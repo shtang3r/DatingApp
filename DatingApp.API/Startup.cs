@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using DatingApp.API.Services;
 
 namespace DatingApp.API
 {
@@ -31,6 +32,7 @@ namespace DatingApp.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<ITokenService, JwtTokenService>();
             services.AddDbContext<DataContext>(x=> x.UseSqlite(GetConnectionString()));
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddCors();

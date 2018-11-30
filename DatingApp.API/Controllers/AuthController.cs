@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using DatingApp.API.Services;
 
 namespace DatingApp.API.Controllers
 {
@@ -19,11 +20,14 @@ namespace DatingApp.API.Controllers
     {
         private readonly IAuthRepository _repository;
         private readonly IConfiguration _configuration;
+        private readonly ITokenService _tokenService;
 
         public AuthController(IAuthRepository repository,        
-                              IConfiguration configuration)
+                              IConfiguration configuration,
+                              ITokenService tokenService)
         {
             _configuration = configuration;
+            _tokenService = tokenService;
             _repository = repository;
         }
 
@@ -51,29 +55,9 @@ namespace DatingApp.API.Controllers
         if (userFromRepo == null)
             return Unauthorized();
 
-        var claims = new[]
-        {
-                new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
-                new Claim(ClaimTypes.Name, userFromRepo.Username)
-            };
+        var token = _tokenService.GetToken(userFromRepo);
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
-
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
-        var tokenDescriptor = new SecurityTokenDescriptor 
-        {
-            Subject = new  ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(1),
-            SigningCredentials = creds
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-
-        return Ok( new {
-            token = tokenHandler.WriteToken(token)
-        });
+        return Ok( new {  token  });
     }
 }
 }

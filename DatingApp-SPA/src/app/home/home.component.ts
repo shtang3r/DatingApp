@@ -8,7 +8,6 @@ import { Component, OnInit } from '@angular/core';
 })
 export class HomeComponent implements OnInit {
   registerMode: boolean;
-
   constructor(private httpClient: HttpClient) { }
 
   ngOnInit() {
