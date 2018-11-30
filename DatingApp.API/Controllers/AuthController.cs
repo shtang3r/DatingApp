@@ -49,8 +49,7 @@ namespace DatingApp.API.Controllers
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
-        {
-            throw new Exception("lolka OWNED GGGG");
+        {            
             var userFromRepo = await _repository.LoginAsync(userForLoginDto.Username.ToLower(), userForLoginDto.Password.ToLower());
 
             if (userFromRepo == null)
