@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.Http;
 using System.Net;
 using Microsoft.AspNetCore.Diagnostics;
 using DatingApp.API.Helpers;
+using Newtonsoft.Json;
+using AutoMapper;
 
 namespace DatingApp.API
 {
@@ -35,11 +37,17 @@ namespace DatingApp.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAutoMapper();
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IDatingRepository, DatingRepository>();
             services.AddScoped<ITokenService, JwtTokenService>();
             services.AddDbContext<DataContext>(x=> x.UseSqlite(GetConnectionString()));
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddJsonOptions(opt=> {
+                    opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore; 
+                });
             services.AddCors();
+            services.AddTransient<Seed>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(Options =>
                 {
@@ -67,6 +75,9 @@ namespace DatingApp.API
             }
 
             // app.UseHttpsRedirection();
+            // SeedUsers(app);
+            
+
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseAuthentication();
             app.UseMvc();
@@ -75,6 +86,12 @@ namespace DatingApp.API
         private string GetConnectionString()
         {
             return Configuration.GetConnectionString("DefaultConnection");
+        }
+
+        private void SeedUsers(IApplicationBuilder app)
+        {
+            var seeder = (Seed)app.ApplicationServices.GetService(typeof(Seed));
+            seeder.SeedUsers();
         }
     }
 }
