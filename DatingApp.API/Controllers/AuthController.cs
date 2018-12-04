@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using DatingApp.API.Services;
+using System.Linq;
+using AutoMapper;
 
 namespace DatingApp.API.Controllers
 {
@@ -21,13 +23,16 @@ namespace DatingApp.API.Controllers
         private readonly IAuthRepository _repository;
         private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;
+        private readonly IMapper _mapper;
 
         public AuthController(IAuthRepository repository,
                               IConfiguration configuration,
-                              ITokenService tokenService)
+                              ITokenService tokenService,
+                              IMapper mapper)
         {
             _configuration = configuration;
             _tokenService = tokenService;
+            _mapper = mapper;
             _repository = repository;
         }
 
@@ -51,13 +56,13 @@ namespace DatingApp.API.Controllers
         public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
         {            
             var userFromRepo = await _repository.LoginAsync(userForLoginDto.Username.ToLower(), userForLoginDto.Password.ToLower());
-
+            var userDto = _mapper.Map<UserForListDto>(userFromRepo);
             if (userFromRepo == null)
                 return Unauthorized();
 
             var token = _tokenService.GetToken(userFromRepo);
 
-            return Ok(new { token });
+            return Ok(new { token, user = userDto });
         }
     }
 }

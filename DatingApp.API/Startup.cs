@@ -47,6 +47,7 @@ namespace DatingApp.API
                     opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore; 
                 });
             services.AddCors();
+            services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
             services.AddTransient<Seed>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(Options =>

@@ -22,4 +22,12 @@ import { User } from '../_models/user';
   updateUser(id: number, user: User) {
     return this.http.put(`${this.baseUrl}users/${id}`, user);
   }
+
+  setMainPhoto(userId: number, photoId: number) {
+    return this.http.put(`${this.baseUrl}users/${userId}/photos/${photoId}/setMain`, {});
+  }
+
+  deletePhoto(photoId: number, userId: number) {
+    return this.http.delete(`${this.baseUrl}users/${userId}/photos/${photoId}`);
+  }
 }
