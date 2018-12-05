@@ -16,6 +16,6 @@ namespace DatingApp.API.Helpers
                 context.Response.AddApplicationError(error.Error.Message);
                 await context.Response.WriteAsync(error.Error.Message);
             }
-        }
+        }        
     }
 }
