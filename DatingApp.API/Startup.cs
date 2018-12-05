@@ -38,9 +38,7 @@ namespace DatingApp.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAutoMapper();
-            services.AddScoped<IAuthRepository, AuthRepository>();
-            services.AddScoped<IDatingRepository, DatingRepository>();
-            services.AddScoped<ITokenService, JwtTokenService>();
+            services.RegisterServices();
             services.AddDbContext<DataContext>(x=> x.UseSqlite(GetConnectionString()));
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddJsonOptions(opt=> {
