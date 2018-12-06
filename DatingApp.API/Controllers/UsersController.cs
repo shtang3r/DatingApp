@@ -29,9 +29,19 @@ namespace DatingApp.API.Controllers
             this._mapper = mapper;
         }
 
+        private int GetCurrentUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
         [HttpGet]
         public async Task<IActionResult> GetUsers([FromQuery] UserParams userParams)
         {
+            var currentUserId = GetCurrentUserId();
+            var userFromRepo = await _datingRepository.GetUserAsync(currentUserId);
+            
+            if (string.IsNullOrEmpty(userParams.Gender))
+            {
+                userParams.Gender = userFromRepo.Gender == "male"? "female" : "male";
+            }
+
             var usersList = await _datingRepository.GetUsersAsync(userParams);
             var usersToReturn = _mapper.Map<IEnumerable<UserForListDto>>(usersList);
             Response.AddPaginationHeader(usersList.CurrentPage,usersList.PageSize,usersList.TotalCount, usersList.TotalPages);
@@ -51,7 +61,7 @@ namespace DatingApp.API.Controllers
         public async Task<IActionResult> UpdateUser(int id, UserForUpdateDto user)
         {
             var userToUpdate = _mapper.Map<User>(user);
-            if (id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
+            if (id != GetCurrentUserId())
             {
                 return Unauthorized();
             }
