@@ -36,21 +36,22 @@ namespace DatingApp.API.Controllers
         {
             var currentUserId = GetCurrentUserId();
             var userFromRepo = await _datingRepository.GetUserAsync(currentUserId);
-            
-            if (string.IsNullOrEmpty(userParams.Gender))
+            userParams.UserId = currentUserId;
+
+            if (string.IsNullOrEmpty(userParams.Gender)) // smelly but whatever
             {
-                userParams.Gender = userFromRepo.Gender == "male"? "female" : "male";
+                userParams.Gender = "all";
             }
 
             var usersList = await _datingRepository.GetUsersAsync(userParams);
             var usersToReturn = _mapper.Map<IEnumerable<UserForListDto>>(usersList);
-            Response.AddPaginationHeader(usersList.CurrentPage,usersList.PageSize,usersList.TotalCount, usersList.TotalPages);
+            Response.AddPaginationHeader(usersList.CurrentPage, usersList.PageSize, usersList.TotalCount, usersList.TotalPages);
             return Ok(usersToReturn);
         }
 
-        [HttpGet("{id}", Name="GetUser")]
+        [HttpGet("{id}", Name = "GetUser")]
         public async Task<IActionResult> GetUser(int id)
-        {            
+        {
             var current = Thread.CurrentPrincipal;
             var user = await _datingRepository.GetUserAsync(id);
             var userToReturn = _mapper.Map<UserForDetailedDto>(user);
@@ -65,7 +66,7 @@ namespace DatingApp.API.Controllers
             {
                 return Unauthorized();
             }
-            
+
             var userFromRepository = await _datingRepository.GetUserAsync(id);
             _mapper.Map(user, userFromRepository);
 
@@ -75,6 +76,41 @@ namespace DatingApp.API.Controllers
             }
 
             throw new Exception($"Updating user {id} failed on save");
+        }
+
+        [HttpPost("{id}/like/{recepientId}")]
+        public async Task<IActionResult> Like(int id, int recepientId)
+        {
+            if (id != GetCurrentUserId())
+            {
+                return Unauthorized();
+            }
+            var like = await _datingRepository.GetLikeAsync(id, recepientId);
+            
+            if (like != null)
+            {
+                return BadRequest("You already like this user");
+            }
+
+            if (await _datingRepository.GetUserAsync(recepientId) == null)
+            {
+                return NotFound("User you want to like doesn't exist");
+            }
+
+            like = new Like
+            {
+                LikerId = id,
+                LikeeId = recepientId
+            };
+
+            _datingRepository.Add<Like>(like);
+
+            if (await _datingRepository.SaveAllAsync())
+            {
+                return Ok();
+            }
+
+            return BadRequest();
         }
     }
 }
