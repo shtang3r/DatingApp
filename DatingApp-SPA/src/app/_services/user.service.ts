@@ -1,3 +1,4 @@
+import { Message } from './../_models/message';
 import { PaginatedResult } from './../_models/pagination';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
@@ -67,5 +68,45 @@ export class UserService {
 
   sendLike(userId: number, recepientId: number) {
     return this.http.post(`${this.baseUrl}users/${userId}/like/${recepientId}`, {});
+  }
+
+  getMessages(userId: number, pageNumber?, pageSize?, messageContainer?) {
+    const paginatedResult: PaginatedResult<Message[]> = new PaginatedResult<Message[]>();
+
+    let urlParameters = new HttpParams();
+    urlParameters = urlParameters.append('MessageContainer', messageContainer);
+
+    if (pageNumber && pageSize) {
+      urlParameters = urlParameters.append('pageNumber', pageNumber);
+      urlParameters = urlParameters.append('pageSize', pageSize);
+    }
+
+    return this.http.get<Message[]>(`${this.baseUrl}users/${userId}/messages`,
+      { observe: 'response', params: urlParameters }).pipe(map(response => {
+        const paginationHeader = response.headers.get('Pagination');
+        paginatedResult.result = response.body;
+        if (paginationHeader) {
+          paginatedResult.pagination = JSON.parse(paginationHeader);
+        }
+
+        return paginatedResult;
+      }));
+  }
+
+  getMessageThread(userId: number, recepientId: number) {
+    return this.http.get<Message[]>(`${this.baseUrl}users/${userId}/messages/thread/${recepientId}`);
+  }
+
+  sendMessage(userId: number, message: Message) {
+    return this.http.post(`${this.baseUrl}users/${userId}/messages`, message);
+  }
+
+  deleteMessage(userId: number, id: number) {
+    return this.http.post(`${this.baseUrl}users/${userId}/messages/${id}`, {});
+  }
+
+  markAsRead(userId: number, id: number) {
+    return this.http.post(`${this.baseUrl}users/${userId}/messages/${id}/read`, {})
+      .subscribe();
   }
 }

@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using DatingApp.API.Helpers;
 using Newtonsoft.Json;
 using AutoMapper;
+using Microsoft.AspNetCore.Routing;
 
 namespace DatingApp.API
 {
@@ -37,6 +38,7 @@ namespace DatingApp.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+             
             services.AddAutoMapper();
             services.RegisterServices();
             services.AddDbContext<DataContext>(x=> x.UseSqlite(GetConnectionString()));
@@ -59,6 +61,7 @@ namespace DatingApp.API
                         ValidateAudience = false
                     };
                 });
+            services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
             services.AddScoped<LogUserActivity>();
         }
 
@@ -76,7 +79,6 @@ namespace DatingApp.API
 
             // app.UseHttpsRedirection();
             // SeedUsers(app);
-            
 
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseAuthentication();

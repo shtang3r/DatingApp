@@ -9,6 +9,7 @@ import { User } from './_models/user';
   styleUrls: ['./app.component.css']
 })
   export class AppComponent implements OnInit {
+    message = 'знімай штани їбати тебе буду';
   jwtHelper = new JwtHelperService();
 
   constructor(private authService: AuthService) {}

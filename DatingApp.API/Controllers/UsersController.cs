@@ -51,8 +51,7 @@ namespace DatingApp.API.Controllers
 
         [HttpGet("{id}", Name = "GetUser")]
         public async Task<IActionResult> GetUser(int id)
-        {
-            var current = Thread.CurrentPrincipal;
+        {            
             var user = await _datingRepository.GetUserAsync(id);
             var userToReturn = _mapper.Map<UserForDetailedDto>(user);
             return Ok(userToReturn);
