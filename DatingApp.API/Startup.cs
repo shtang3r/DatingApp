@@ -42,31 +42,20 @@ namespace DatingApp.API
              
             services.AddAutoMapper();
             services.RegisterServices();
-            services.AddDbContext<DataContext>(x=> 
-                    x.UseSqlServer(GetConnectionString())
-                    // x.UseMySql(GetConnectionString()) for local // TODO: make it more elegant
+
+            services.AddDbContext<DataContext>(x=>                     
+                    x.UseMySql(GetConnectionString())
                     .ConfigureWarnings(warnings => warnings.Ignore(CoreEventId.IncludeIgnoredWarning)));
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddJsonOptions(opt=> {
                     opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore; 
-                });
-                
-            services.BuildServiceProvider().GetService<DataContext>().Database.Migrate();
+                });                
+            
             services.AddCors();
             services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
             services.AddTransient<Seed>();
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(Options =>
-                {
-                    Options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII
-                            .GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
-                        ValidateIssuer = false,
-                        ValidateAudience = false
-                    };
-                });
+            AddJwtConfiguration(services);
             services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
             services.AddScoped<LogUserActivity>();
         }
@@ -84,23 +73,11 @@ namespace DatingApp.API
             services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
             services.AddTransient<Seed>();
             AddJwtConfiguration(services);
-            // services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            //     .AddJwtBearer(Options =>
-            //     {
-            //         Options.TokenValidationParameters = new TokenValidationParameters
-            //         {
-            //             ValidateIssuerSigningKey = true,
-            //             IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII
-            //                 .GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
-            //             ValidateIssuer = false,
-            //             ValidateAudience = false
-            //         };
-            //     });            
             services.AddScoped<LogUserActivity>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, Seed seeder)
         {
             if (env.IsDevelopment())
             {
@@ -112,7 +89,7 @@ namespace DatingApp.API
             }
 
             // app.UseHttpsRedirection();
-            // SeedUsers(app);
+            //SeedUsers(app, seeder);
 
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseAuthentication();
@@ -148,9 +125,9 @@ namespace DatingApp.API
                 });
         }
 
-        private void SeedUsers(IApplicationBuilder app)
+        private void SeedUsers(IApplicationBuilder app, Seed seeder)
         {
-            var seeder = (Seed)app.ApplicationServices.GetService(typeof(Seed));
+            //var seeder = (Seed)app.ApplicationServices.GetService(typeof(Seed));
             seeder.SeedUsers();
         }
     }
