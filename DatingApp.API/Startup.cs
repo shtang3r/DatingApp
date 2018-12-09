@@ -23,6 +23,7 @@ using DatingApp.API.Helpers;
 using Newtonsoft.Json;
 using AutoMapper;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace DatingApp.API
 {
@@ -41,11 +42,16 @@ namespace DatingApp.API
              
             services.AddAutoMapper();
             services.RegisterServices();
-            services.AddDbContext<DataContext>(x=> x.UseSqlite(GetConnectionString()));
+            services.AddDbContext<DataContext>(x=> 
+                    x.UseSqlServer(GetConnectionString())
+                    // x.UseMySql(GetConnectionString()) for local // TODO: make it more elegant
+                    .ConfigureWarnings(warnings => warnings.Ignore(CoreEventId.IncludeIgnoredWarning)));
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddJsonOptions(opt=> {
                     opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore; 
                 });
+                
+            services.BuildServiceProvider().GetService<DataContext>().Database.Migrate();
             services.AddCors();
             services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
             services.AddTransient<Seed>();
@@ -62,6 +68,34 @@ namespace DatingApp.API
                     };
                 });
             services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
+            services.AddScoped<LogUserActivity>();
+        }
+
+        public void ConfigureDevelopmentServices(IServiceCollection services)
+        {             
+            services.AddAutoMapper();
+            services.RegisterServices();
+            services.AddDbContext<DataContext>(x=> x.UseMySql(GetConnectionString()));
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddJsonOptions(opt=> {
+                    opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore; 
+                });
+            services.AddCors();
+            services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
+            services.AddTransient<Seed>();
+            AddJwtConfiguration(services);
+            // services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            //     .AddJwtBearer(Options =>
+            //     {
+            //         Options.TokenValidationParameters = new TokenValidationParameters
+            //         {
+            //             ValidateIssuerSigningKey = true,
+            //             IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII
+            //                 .GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
+            //             ValidateIssuer = false,
+            //             ValidateAudience = false
+            //         };
+            //     });            
             services.AddScoped<LogUserActivity>();
         }
 
@@ -82,12 +116,36 @@ namespace DatingApp.API
 
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseAuthentication();
-            app.UseMvc();
+
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+            app.UseMvc(routes => {
+                routes.MapSpaFallbackRoute(
+                    name: "spa-fallback",
+                    defaults: new {controller = "Fallback", action = "Index" }
+                );
+            });
         }   
 
         private string GetConnectionString()
         {
             return Configuration.GetConnectionString("DefaultConnection");
+        }
+
+        private void AddJwtConfiguration(IServiceCollection services)
+        {
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(Options =>
+                {
+                    Options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII
+                            .GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
+                        ValidateIssuer = false,
+                        ValidateAudience = false
+                    };
+                });
         }
 
         private void SeedUsers(IApplicationBuilder app)

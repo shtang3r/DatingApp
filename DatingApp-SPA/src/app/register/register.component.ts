@@ -29,7 +29,8 @@ export class RegisterComponent implements OnInit {
     //   confirmPassword: new FormControl('', [Validators.required])
     // }, this.passwordMatchValidator);
     this.bsConfig = {
-      containerClass: 'theme-red'
+      containerClass: 'theme-red',
+      dateInputFormat: 'DD-MM-YYYY'
     };
     this.createRegisterForm();
   }
