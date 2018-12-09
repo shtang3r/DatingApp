@@ -90,7 +90,7 @@ namespace DatingApp.API.Controllers
             if (await _datingRepository.SaveAllAsync())
             {
                 var messageToReturn = _mapper.Map<MessageToReturnDto>(message);
-                var senderPhotoUrl = (await _datingRepository.GetMainPhotoAsync(userId)).Url;
+                var senderPhotoUrl = (await _datingRepository.GetMainPhotoAsync(userId))?.Url;
                 messageToReturn.SenderPhotoUrl = senderPhotoUrl;
                 return CreatedAtRoute("GetMessage", new { id = message.Id }, messageToReturn);
             }
